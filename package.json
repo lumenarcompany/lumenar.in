@@ -1,0 +1,14 @@
+{
+  "name": "lumenar-site",
+  "version": "1.0.0",
+  "description": "lumenar.in website",
+  "scripts": {
+    "build": "node build.js"
+  },
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "roughjs": "^4.6.6"
+  },
+  "private": true
+}
