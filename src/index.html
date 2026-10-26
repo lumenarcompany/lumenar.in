@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lumenar | Inference for long-running AI agents</title>
+  <meta name="description" content="Lumenar is an inference layer for long-running AI agents on open models. It reuses the context agents keep re-sending and keeps the session intact when you switch models.">
+  <meta property="og:title" content="Lumenar | Inference for long-running AI agents">
+  <meta property="og:description" content="Stop paying for the same tokens twice, and switch models without losing the session.">
+  <meta property="og:url" content="https://lumenar.in/">
+  <meta property="og:type" content="website">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/LumenarSans-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/Kalam-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="top">
+    <div class="wrap top-row">
+      <a class="wordmark" href="#top" aria-label="Lumenar home">Lumenar</a>
+      <nav aria-label="Main">
+        <a href="#how">How it works</a>
+        <a href="#status">Where we are</a>
+        <a href="#team">Team</a>
+        <a class="btn btn-small" href="#contact">Talk to us</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <div class="wrap hero-grid">
+        <div class="hero-copy">
+          <h1>Your agent shouldn't pay for the same tokens twice.</h1>
+          <p class="lede">Lumenar is an inference layer for long-running AI agents on open models. It reuses the context your agent keeps re-sending, and keeps the session intact when you switch models.</p>
+          <div class="actions">
+            <a class="btn" href="#contact">Talk to us</a>
+            <a class="btn btn-quiet" href="#how">See how it works</a>
+          </div>
+          <p class="note">Built on vLLM and SGLang. One OpenAI-compatible API.</p>
+        </div>
+        <figure class="hero-figure">
+          <!--sketch:hero-->
+        </figure>
+      </div>
+    </section>
+
+    <section class="band" id="problem">
+      <div class="wrap split">
+        <div>
+          <h2>Most of an agent's bill is re-reading.</h2>
+          <p>Every turn, an agent sends its whole history back to the model: the system prompt, the tools, the files it opened, every earlier step. The history grows each turn, and you pay for all of it again.</p>
+          <div class="stats">
+            <div class="stat">
+              <p class="num">99.2%</p>
+              <p>of all tokens in our own agent sessions were input, not output.</p>
+            </div>
+            <div class="stat">
+              <p class="num"><span class="hl">88.5%</span></p>
+              <p>of those input tokens had been sent before.</p>
+            </div>
+          </div>
+          <p class="source">Measured on our own coding-agent logs: 17,780 model calls in 1,305 sessions, 1.43B prompt tokens.</p>
+        </div>
+        <figure>
+          <!--sketch:resend-->
+          <figcaption>An illustrative 60-turn task, thousands of tokens sent per turn.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="band" id="switch">
+      <div class="wrap narrow">
+        <h2>Switching models throws the session away.</h2>
+        <p>Teams change models for price, rate limits or quality. But a model's cache is computed from its own weights, and each model has its own tokenizer, chat template and tool-call format. So the new model starts cold: it reads the whole history again, and the plan can get lost on the way. Most teams just avoid switching, and live with the lock-in.</p>
+      </div>
+    </section>
+
+    <section class="band" id="how">
+      <div class="wrap">
+        <h2>What Lumenar does</h2>
+        <p class="intro">Lumenar sits between your agent and your models. We extend open engines; we don't build a new one.</p>
+        <div class="grid-2">
+          <article class="mech">
+            <!--sketch:mini-sticky-->
+            <h3>Keeps each session on its cache</h3>
+            <p>Requests from one agent session go to the GPU that already holds its KV cache, so old context isn't computed again.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-append-->
+            <h3>Lays out prompts so they stay cacheable</h3>
+            <p>Stable parts go first and new turns go last. One changed token early in the prompt breaks the cache for everything after it.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-route-->
+            <h3>Picks a model for each step</h3>
+            <p>Reading files, searching and running tests go to a small model. Planning and debugging go to a large one.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-handoff-->
+            <h3>Hands the session over on a switch</h3>
+            <p>The session lives in a log that no single model owns, so a new model can pick it up where the last one stopped.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="handoff">
+      <div class="wrap">
+        <h2>What happens when you switch</h2>
+        <!--sketch:handoff-->
+        <ol class="steps">
+          <li><strong>Freeze.</strong> Stop at a clean turn boundary.</li>
+          <li><strong>Compact.</strong> Fold old turns into the session log, keeping the plan, decisions and open files.</li>
+          <li><strong>Render.</strong> Write the log in the new model's chat template and tool format.</li>
+          <li><strong>Warm up.</strong> One prefill fills the new model's cache.</li>
+          <li><strong>Check.</strong> A short probe confirms the new model knows the plan.</li>
+          <li><strong>Go on.</strong> The agent continues from the same turn.</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="band" id="impact">
+      <div class="wrap split split-wide">
+        <div>
+          <h2>What it could save</h2>
+          <p>For one 60-turn example task, our cost model puts the bill at $2.95 with no reuse, $0.47 with a prefix cache, and $0.30 when easy steps also go to a smaller model.</p>
+          <p class="source">Assumptions: $1 per 1M new input tokens, $0.10 per 1M cached, $3 per 1M output; 12K to 84K tokens per turn; 70% of steps can use a model at one fifth of the price. A pilot measures the real numbers.</p>
+        </div>
+        <figure>
+          <!--sketch:impact-->
+        </figure>
+      </div>
+    </section>
+
+    <section class="band" id="status">
+      <div class="wrap">
+        <h2>Where we are</h2>
+        <p class="intro">We're at prototype stage and pre-revenue. Here's exactly what's done and what isn't.</p>
+        <div class="grid-2 status">
+          <div>
+            <h3>Done</h3>
+            <ul class="ticks">
+              <li><!--sketch:check--><span>A market study of 8.56M public posts and issues on inference</span></li>
+              <li><!--sketch:check--><span>The architecture, and a 12-week plan with go / no-go gates</span></li>
+              <li><!--sketch:check--><span>A baseline on real agent logs: 88.5% of prompt tokens repeat</span></li>
+              <li><!--sketch:check--><span>A shipped product: <a href="https://beclutchai.com">Clutch</a>, a basketball recruiting platform</span></li>
+            </ul>
+          </div>
+          <div>
+            <h3>Not yet</h3>
+            <ul class="ticks">
+              <li><!--sketch:open--><span>A working prototype of the session layer. The build starts now.</span></li>
+              <li><!--sketch:open--><span>Paying customers</span></li>
+              <li><!--sketch:open--><span>An external benchmark. That's what a pilot is for.</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="team">
+      <div class="wrap">
+        <h2>Team</h2>
+        <div class="people">
+          <div class="person">
+            <h3>Dilshaan Momin</h3>
+            <p>Founder and CEO</p>
+            <a href="mailto:mdilshaanbasha@gmail.com">mdilshaanbasha@gmail.com</a>
+          </div>
+          <div class="person">
+            <h3>Mohd Guffran</h3>
+            <p>Founding Engineer</p>
+            <a href="mailto:guffran.lumenar@gmail.com">guffran.lumenar@gmail.com</a>
+          </div>
+          <div class="person">
+            <h3>Sk Mastan</h3>
+            <p>Founding Engineer</p>
+            <a href="mailto:mastan.lumenar.team@gmail.com">mastan.lumenar.team@gmail.com</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta" id="contact">
+      <div class="wrap narrow">
+        <h2>Running long agents on open models?</h2>
+        <p>We're looking for teams and GPU partners for a pilot. We run your real agent workloads, baseline against Lumenar, and judge it on one number: cost per solved task.</p>
+        <div class="actions">
+          <a class="btn btn-light" href="mailto:mdilshaanbasha@gmail.com?subject=Lumenar%20pilot">Email us about a pilot</a>
+          <a class="btn btn-quiet-light" href="https://www.linkedin.com/company/lumenar.in/posts">Follow on LinkedIn</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap foot-row">
+      <p><span class="wordmark small">Lumenar</span> Hyderabad, India</p>
+      <p><a href="https://www.linkedin.com/company/lumenar.in/posts">LinkedIn</a></p>
+    </div>
+  </footer>
+</body>
+</html>
