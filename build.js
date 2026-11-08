@@ -33,30 +33,77 @@ const label = (x, y, t, size = 17, weight = 700, fill = INK, anchor = "middle") 
 const svg = (w, h, body, title, cls = "") =>
   `<svg class="sketch ${cls}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${title}" fill="none" stroke-linecap="round" stroke-linejoin="round"><title>${title}</title>${body}</svg>`;
 
-// ---------- hero: one session moves from model A to model B, memory kept ----------
+// ---------- hero: what runs today. agent -> Inferstack gateway -> two engines, with a ledger ----------
 function hero() {
   let b = "";
   b += box(30, 30, 170, 64, {}, "d1") + label(115, 69, "your agent");
-  b += arrow(115, 100, 245, 172, {}, "d2");
-  b += hand(186, 128, "every turn", 18, MUTE);
-  b += box(220, 180, 220, 92, { strokeWidth: 2.6, stroke: INK }, "d3") + box(226, 186, 208, 80, { stroke: INK, strokeWidth: 1, roughness: 1.6 }, "d3");
-  b += label(330, 224, "Lumenar", 24, 800) + label(330, 251, "session layer", 15, 400, MUTE);
-  // session log: a little stack of pages
-  b += box(476, 166, 82, 100, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid" }, "d4") + box(470, 172, 82, 100, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid" }, "d4");
-  for (let i = 0; i < 4; i++) b += line(482, 194 + i * 17, 540 - (i % 2) * 16, 194 + i * 17, { stroke: MUTE, strokeWidth: 1.4 }, "d4");
-  b += line(440, 226, 468, 222, { stroke: INK }, "d4");
-  b += hand(514, 154, "session log", 19, PEN, 'text-anchor="middle"') + hand(514, 298, "not tied to any model", 16, MUTE, 'text-anchor="middle"');
-  // model A and B
-  b += box(20, 380, 180, 70, {}, "d5") + label(110, 412, "Model A") + label(110, 434, "turns 1 - 29", 14, 400, MUTE);
-  b += arrow(268, 278, 150, 372, {}, "d5");
-  b += box(400, 380, 180, 70, {}, "d6") + label(490, 412, "Model B") + label(490, 434, "turn 30 onward", 14, 400, MUTE);
-  b += arrow(392, 278, 470, 372, { strokeWidth: 2.4 }, "d6");
-  b += hand(454, 346, "switch at turn 30", 19, PEN, 'text-anchor="start"');
+  b += arrow(115, 100, 115, 166, {}, "d2");
+  b += hand(130, 140, "X-Inferstack-Session: ticket-42", 16, MUTE, 'text-anchor="start"');
+  // the gateway
+  b += box(30, 176, 340, 110, { strokeWidth: 2.6, stroke: INK }, "d3") + box(36, 182, 328, 98, { stroke: INK, strokeWidth: 1, roughness: 1.6 }, "d3");
+  b += label(200, 220, "Inferstack", 24, 800) + label(200, 247, "session table  ·  router  ·  meter", 14, 400, MUTE);
+  b += hand(200, 272, "one OpenAI-compatible API", 16, PEN, 'text-anchor="middle"');
+  // the ledger: a little stack of pages
+  b += box(476, 186, 82, 100, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid" }, "d4") + box(470, 192, 82, 100, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid" }, "d4");
+  for (let i = 0; i < 4; i++) b += line(482, 214 + i * 17, 540 - (i % 2) * 16, 214 + i * 17, { stroke: MUTE, strokeWidth: 1.4 }, "d4");
+  b += arrow(372, 232, 466, 240, { stroke: INK }, "d4");
+  b += hand(514, 174, "ledger", 19, PEN, 'text-anchor="middle"') + hand(514, 318, "cost of every request", 16, MUTE, 'text-anchor="middle"');
+  // two engines
+  b += box(20, 380, 180, 70, {}, "d5") + label(110, 412, "small model") + label(110, 434, "chat, extraction", 14, 400, MUTE);
+  b += arrow(130, 292, 110, 372, {}, "d5");
+  b += box(400, 380, 180, 70, {}, "d6") + label(490, 412, "large model") + label(490, 434, "code, reasoning", 14, 400, MUTE);
+  b += arrow(270, 292, 470, 372, { strokeWidth: 2.4 }, "d6");
+  b += hand(300, 352, "same session, same engine", 18, PEN, 'text-anchor="middle"');
   // the payoff, circled
-  b += hand(330, 504, "same plan, same files, cache warmed once", 21, INK, 'text-anchor="middle"');
-  b += ell(330, 497, 440, 58, { stroke: PEN, roughness: 1.6, strokeWidth: 1.8 }, "d7");
+  b += hand(330, 504, "old context stays in cache, new turns cost new tokens", 19, INK, 'text-anchor="middle"');
+  b += ell(330, 497, 560, 58, { stroke: PEN, roughness: 1.6, strokeWidth: 1.8 }, "d7");
   b += curve([[488, 455], [474, 466], [462, 470]], { strokeWidth: 1.6 }, "d7");
-  return svg(640, 540, b, "Diagram: your agent talks to the Lumenar session layer, which keeps a session log. Turns 1 to 29 run on model A; at turn 30 the session moves to model B with the same plan and files and a cache warmed once.", "hero-sketch");
+  return svg(640, 540, b, "Diagram: your agent sends OpenAI-compatible requests with a session header to the Inferstack gateway, which holds a session table, a router and a meter, writes a ledger, and keeps each session on one of two engines: a small model for chat and extraction, a large one for code and reasoning.", "hero-sketch");
+}
+
+// ---------- measured benchmark: wall time cold vs inside a session ----------
+function bench() {
+  const groups = [["small model", 40.2, 5.2], ["large model", 61.4, 12.6]];
+  let b = "";
+  const base = 236, scale = 2.45;
+  groups.forEach(([name, cold, warm], g) => {
+    const x0 = 60 + g * 230;
+    const hc = cold * scale, hw = warm * scale;
+    b += box(x0, base - hc, 70, hc, { stroke: INK, fill: MUTE, fillStyle: "hachure", hachureGap: 6, fillWeight: 1.2, strokeWidth: 1.6 });
+    b += label(x0 + 35, base - hc - 8, cold.toFixed(1) + " s", 14, 600, INK);
+    b += box(x0 + 94, base - hw, 70, hw, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.6 });
+    b += label(x0 + 129, base - hw - 8, warm.toFixed(1) + " s", 14, 700, INK);
+    b += label(x0 + 35, base + 22, "cold", 13, 400, MUTE) + label(x0 + 129, base + 22, "in session", 13, 400, MUTE);
+    b += label(x0 + 82, base + 46, name, 15, 700, INK);
+  });
+  b += line(40, base + 2, 520, base + 2, { stroke: INK, strokeWidth: 1.6 });
+  b += hand(60, 30, "same request, second turn of a session", 19, PEN, 'text-anchor="start"');
+  return svg(540, 290, b, "Bar chart of measured wall time. Small model: 40.2 seconds cold, 5.2 seconds inside a session. Large model: 61.4 seconds cold, 12.6 seconds inside a session.");
+}
+
+// ---------- the console app: a laptop and a phone showing the same chat ----------
+function consoleSketch() {
+  let b = "";
+  // laptop
+  b += box(20, 30, 330, 210, { stroke: INK, strokeWidth: 2 }) + line(0, 250, 370, 250, { stroke: INK, strokeWidth: 2.2 }) + line(140, 240, 230, 240, { stroke: MUTE, strokeWidth: 1.2 });
+  b += box(36, 46, 70, 178, { stroke: MUTE, strokeWidth: 1.2 });
+  ["chat", "sessions", "ledger", "status"].forEach((t, i) => b += label(71, 72 + i * 26, t, 12, i === 0 ? 700 : 400, i === 0 ? INK : MUTE));
+  b += box(122, 60, 190, 30, { stroke: MUTE, strokeWidth: 1.2 }) + label(132, 80, "summarize the error log", 12, 400, INK, "start");
+  b += box(122, 102, 212, 70, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.4 });
+  for (let i = 0; i < 3; i++) b += line(132, 118 + i * 14, 300 - (i % 2) * 40, 118 + i * 14, { stroke: MUTE, strokeWidth: 1.2 });
+  b += box(122, 184, 212, 26, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.2 });
+  b += `<text x="130" y="201" font-family="ui-monospace, Menlo, monospace" font-size="10.5" fill="${INK}">cheap · cache 97.1% · $0.000008</text>`;
+  // phone
+  b += box(410, 20, 120, 240, { stroke: INK, strokeWidth: 2 }) + line(455, 36, 485, 36, { stroke: MUTE, strokeWidth: 1.6 });
+  b += box(422, 56, 96, 24, { stroke: MUTE, strokeWidth: 1.2 });
+  b += box(422, 90, 96, 70, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.4 });
+  for (let i = 0; i < 3; i++) b += line(430, 106 + i * 14, 505 - (i % 2) * 24, 106 + i * 14, { stroke: MUTE, strokeWidth: 1.2 });
+  b += box(422, 170, 96, 24, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.2 });
+  b += `<text x="428" y="186" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="${INK}">cache=97.1%</text>`;
+  b += line(422, 236, 518, 236, { stroke: MUTE, strokeWidth: 1.2 });
+  b += hand(470, 292, "one codebase", 18, PEN, 'text-anchor="middle"');
+  b += hand(185, 292, "desktop, Android, browser", 18, PEN, 'text-anchor="middle"');
+  return svg(560, 310, b, "Sketch of the Inferstack Console on a laptop and a phone: the same chat, and a highlighted metadata line under the reply showing engine, cache hit and served cost.");
 }
 
 // ---------- re-send tax: tokens sent each turn ----------
@@ -97,6 +144,35 @@ function mini(kind) {
     b += box(146, 2, 108, 28, { stroke: INK, strokeWidth: 1.5 }) + label(200, 21, "small model", 12, 600);
     b += box(146, 62, 108, 28, { stroke: INK, strokeWidth: 1.5 }) + label(200, 81, "large model", 12, 600);
     b += hand(262, 22, "read, search", 14, MUTE, 'text-anchor="start"') + hand(262, 82, "plan, debug", 14, MUTE, 'text-anchor="start"');
+  } else if (kind === "meter") {
+    b += box(8, 6, 150, 86, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.5 });
+    b += label(20, 30, "served", 12, 600, INK, "start") + label(146, 30, "$0.000086", 12, 700, INK, "end");
+    b += label(20, 54, "reference", 12, 600, MUTE, "start") + label(146, 54, "$0.000017", 12, 400, MUTE, "end");
+    b += line(18, 66, 148, 66, { stroke: MUTE, strokeWidth: 1.2 });
+    b += label(20, 84, "engine ms × $/h", 11, 400, MUTE, "start");
+    b += hand(176, 56, "stored per request", 15, PEN, 'text-anchor="start"');
+  } else if (kind === "failover") {
+    b += box(8, 30, 66, 32, { stroke: INK }) + label(41, 51, "request", 12, 600);
+    b += box(146, 2, 108, 28, { stroke: MUTE, strokeWidth: 1.4 }) + label(200, 21, "engine A", 12, 400, MUTE);
+    b += line(160, 6, 240, 26, { stroke: PEN, strokeWidth: 1.6 }) + line(160, 26, 240, 6, { stroke: PEN, strokeWidth: 1.6 });
+    b += box(146, 62, 108, 28, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.5 }) + label(200, 81, "engine B", 12, 700);
+    b += arrow(78, 54, 140, 76);
+    b += hand(262, 82, "X-Inferstack-Failover", 13, MUTE, 'text-anchor="start"');
+  } else if (kind === "evals") {
+    for (let i = 0; i < 12; i++) {
+      const x = 10 + (i % 6) * 26, y = 14 + Math.floor(i / 6) * 28;
+      if (i === 4 || i === 9) b += line(x + 3, y + 3, x + 15, y + 15, { stroke: MUTE, strokeWidth: 1.6 }) + line(x + 15, y + 3, x + 3, y + 15, { stroke: MUTE, strokeWidth: 1.6 });
+      else b += curve([[x + 2, y + 9], [x + 7, y + 15], [x + 17, y + 3]], { stroke: INK, strokeWidth: 1.8 });
+    }
+    b += label(14, 86, "10 / 12", 14, 700, INK, "start");
+    b += hand(176, 48, "suite hash 4a28e07b…", 15, PEN, 'text-anchor="start"');
+    b += hand(176, 72, "ships with the model", 13, MUTE, 'text-anchor="start"');
+  } else if (kind === "api") {
+    b += box(8, 14, 250, 32, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.5 });
+    b += `<text x="18" y="35" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="${INK}">POST /v1/chat/completions</text>`;
+    b += box(8, 56, 272, 34, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.5 });
+    b += `<text x="18" y="78" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="${INK}">"inferstack": { cache_hit_ratio … }</text>`;
+    b += hand(290, 80, "every reply", 15, PEN, 'text-anchor="start"');
   } else {
     b += box(8, 26, 70, 40, { stroke: INK }) + label(43, 51, "A", 14, 700);
     b += box(226, 26, 70, 40, { stroke: INK }) + label(261, 51, "B", 14, 700);
@@ -143,8 +219,9 @@ const marks = {
 
 let html = fs.readFileSync(path.join(__dirname, "src/index.html"), "utf8");
 const slots = {
-  hero: hero(), resend: resend(), handoff: handoff(), impact: impact(),
+  hero: hero(), resend: resend(), bench: bench(), console: consoleSketch(), handoff: handoff(), impact: impact(),
   "mini-sticky": mini("sticky"), "mini-append": mini("append"), "mini-route": mini("route"), "mini-handoff": mini("handoff"),
+  "mini-meter": mini("meter"), "mini-failover": mini("failover"), "mini-evals": mini("evals"), "mini-api": mini("api"),
 };
 html = html.replace(/<!--sketch:([a-z-]+)-->/g, (m, k) => {
   if (slots[k]) return slots[k];
