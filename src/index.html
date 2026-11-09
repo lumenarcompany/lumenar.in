@@ -4,9 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lumenar | Inference for long-running AI agents</title>
-  <meta name="description" content="Lumenar is an inference layer for long-running AI agents on open models. It reuses the context agents keep re-sending and keeps the session intact when you switch models.">
+  <meta name="description" content="Lumenar builds Inferstack, a session-aware inference gateway for AI agents on open models, and the Inferstack Console: create an agent, give it a task, run it, and see what it cost.">
   <meta property="og:title" content="Lumenar | Inference for long-running AI agents">
-  <meta property="og:description" content="Stop paying for the same tokens twice, and switch models without losing the session.">
+  <meta property="og:description" content="Inferstack: one OpenAI-compatible gateway that stops your agent paying for the same tokens twice.">
   <meta property="og:url" content="https://lumenar.in/">
   <meta property="og:type" content="website">
   <meta name="theme-color" content="#ffffff">
@@ -22,10 +22,12 @@
     <div class="wrap top-row">
       <a class="wordmark" href="#top" aria-label="Lumenar home">Lumenar</a>
       <nav aria-label="Main">
-        <a href="#how">How it works</a>
+        <a href="#how">Inferstack</a>
+        <a href="#console">Console</a>
+        <a href="#why">Why</a>
         <a href="#status">Where we are</a>
         <a href="#team">Team</a>
-        <a class="btn btn-small" href="#contact">Talk to us</a>
+        <a class="btn btn-small" href="/console/">Open the Console</a>
       </nav>
     </div>
   </header>
@@ -35,12 +37,12 @@
       <div class="wrap hero-grid">
         <div class="hero-copy">
           <h1>Your agent shouldn't pay for the same tokens twice.</h1>
-          <p class="lede">Lumenar is an inference layer for long-running AI agents on open models. It reuses the context your agent keeps re-sending, and keeps the session intact when you switch models.</p>
+          <p class="lede">Lumenar builds <strong>Inferstack</strong>, a session-aware inference gateway for AI agents on open models. It keeps each session on the engine that already holds its cache, sends each step to the cheapest model that fits, and records what every request really cost.</p>
           <div class="actions">
-            <a class="btn" href="#contact">Talk to us</a>
-            <a class="btn btn-quiet" href="#how">See how it works</a>
+            <a class="btn" href="/console/">Open the Console</a>
+            <a class="btn btn-quiet" href="#how">See what it does</a>
           </div>
-          <p class="note">Built on vLLM and SGLang. One OpenAI-compatible API.</p>
+          <p class="note">One OpenAI-compatible API. Running today on llama.cpp; vLLM and SGLang engines are next.</p>
         </div>
         <figure class="hero-figure">
           <!--sketch:hero-->
@@ -72,45 +74,139 @@
       </div>
     </section>
 
-    <section class="band" id="switch">
-      <div class="wrap narrow">
-        <h2>Switching models throws the session away.</h2>
-        <p>Teams change models for price, rate limits or quality. But a model's cache is computed from its own weights, and each model has its own tokenizer, chat template and tool-call format. So the new model starts cold: it reads the whole history again, and the plan can get lost on the way. Most teams just avoid switching, and live with the lock-in.</p>
+    <section class="band" id="measured">
+      <div class="wrap split split-wide">
+        <div>
+          <h2>What the prototype measures</h2>
+          <p>Inferstack runs today on a laptop with no GPU: two Qwen2.5 models served by llama.cpp behind one gateway. The same two-turn session was run cold and then with the session cache.</p>
+          <div class="stats">
+            <div class="stat">
+              <p class="num"><span class="hl">87%</span></p>
+              <p>less served cost on the second turn, on the small model. 79.6% on the larger one.</p>
+            </div>
+            <div class="stat">
+              <p class="num">98.3%</p>
+              <p>of the prompt came from cache on the second turn.</p>
+            </div>
+          </div>
+          <p class="source">8 CPU cores, 6.9 GiB RAM, Qwen2.5 0.5B and 1.5B Q4_K_M, llama.cpp b12186. Served cost is measured engine time times an hourly rate. A repeated 4,298-token prompt took 73.4 s cold and 0.24 s from cache. On a GPU the absolute times fall; the cache gain is the part that does not depend on hardware.</p>
+        </div>
+        <figure>
+          <!--sketch:bench-->
+          <figcaption>Wall time for the same request, cold and then inside a session.</figcaption>
+        </figure>
       </div>
     </section>
 
     <section class="band" id="how">
       <div class="wrap">
-        <h2>What Lumenar does</h2>
-        <p class="intro">Lumenar sits between your agent and your models. We extend open engines; we don't build a new one.</p>
+        <h2>What Inferstack does</h2>
+        <p class="intro">It sits between your agent and your engines. Your agent keeps using the OpenAI chat API; it adds one header for the session.</p>
         <div class="grid-2">
           <article class="mech">
             <!--sketch:mini-sticky-->
             <h3>Keeps each session on its cache</h3>
-            <p>Requests from one agent session go to the GPU that already holds its KV cache, so old context isn't computed again.</p>
-          </article>
-          <article class="mech">
-            <!--sketch:mini-append-->
-            <h3>Lays out prompts so they stay cacheable</h3>
-            <p>Stable parts go first and new turns go last. One changed token early in the prompt breaks the cache for everything after it.</p>
+            <p>A session is pinned to the engine it started on, so the engine already holds the prefix and old context is not computed again.</p>
           </article>
           <article class="mech">
             <!--sketch:mini-route-->
             <h3>Picks a model for each step</h3>
-            <p>Reading files, searching and running tests go to a small model. Planning and debugging go to a large one.</p>
+            <p>Three policies: cost, balanced, quality. Under balanced, chat and extraction go to the small model; code and reasoning escalate to the large one and stay there.</p>
           </article>
           <article class="mech">
-            <!--sketch:mini-handoff-->
-            <h3>Hands the session over on a switch</h3>
-            <p>The session lives in a log that no single model owns, so a new model can pick it up where the last one stopped.</p>
+            <!--sketch:mini-meter-->
+            <h3>Meters what each request cost</h3>
+            <p>Served cost is busy engine time times your hourly rate. Reference cost is the list price for the same tokens. Both are stored per request in a ledger.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-failover-->
+            <h3>Fails over</h3>
+            <p>If the chosen engine is unhealthy or returns a retryable error, the request goes to the alternate engine and the response says so.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-evals-->
+            <h3>Publishes eval checksums</h3>
+            <p>A fixed eval suite runs against each model. The score and the hash of the suite ship with the model metadata, so a model swap cannot go unnoticed.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-api-->
+            <h3>Speaks the API you already use</h3>
+            <p>Streaming and non-streaming chat completions, bearer-token auth, Prometheus metrics, and an <code>inferstack</code> block on every response with engine, cache hit, latency and cost.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-agents-->
+            <h3>Runs agents and tasks for you</h3>
+            <p>Save an agent: instructions, policy, limits, an optional budget. Hand it tasks. The gateway runs them in the background, streams the output, and keeps the agent's instructions in the cache between tasks.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-budget-->
+            <h3>Caps what an agent may spend</h3>
+            <p>Each agent has its own ledger: tasks, runs, served cost, reference cost. Give it a budget in dollars and runs stop when the measured cost reaches it.</p>
           </article>
         </div>
       </div>
     </section>
 
-    <section class="band" id="handoff">
+    <section class="band" id="console">
+      <div class="wrap split">
+        <div>
+          <h2>Inferstack Console</h2>
+          <p>The control panel for a gateway. Create an agent from a template, give it a task, press Run, and watch the result stream in with the engine, cache hit and cost it took. Chat with a session, browse sessions and the ledger, check engine health. One codebase for Linux, Windows, macOS, Android and the browser.</p>
+          <div class="actions">
+            <a class="btn" href="/console/">Open the Console</a>
+            <a class="btn btn-quiet" href="https://github.com/lumenarcompany/inferstack">Source and desktop builds</a>
+          </div>
+          <p class="note">Live in your browser. It talks to your own gateway; nothing about your prompts passes through us.</p>
+          <ol class="steps steps-tight">
+            <li><strong>Connect.</strong> Gateway URL and API key, stored on your device.</li>
+            <li><strong>Create an agent.</strong> Pick Summarizer, JSON extractor, Code reviewer, Translator, Support reply, Step planner, or start blank.</li>
+            <li><strong>Run a task.</strong> Paste the input, press Run. Re-run it, or run it under cost and quality side by side.</li>
+          </ol>
+        </div>
+        <figure>
+          <!--sketch:console-->
+          <figcaption>Every run ends with the same metadata line the CLI prints.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="band" id="why">
       <div class="wrap">
-        <h2>What happens when you switch</h2>
+        <h2>Why this instead of a frontier API</h2>
+        <p class="intro">Hosted frontier models are the right tool for many jobs. For long-running agents on your own data, a gateway you run changes what you can measure and what you can promise.</p>
+        <div class="grid-2 why">
+          <article class="mech">
+            <h3>Your hardware, your models</h3>
+            <p>Open models served by engines you run, on a laptop today and on your GPUs next. Swap a model by editing one config block; the eval checksum tells you if quality moved.</p>
+          </article>
+          <article class="mech">
+            <h3>Cost you can audit</h3>
+            <p>Served cost is measured engine time, not a price list. Every request, session, agent and task carries it, with the list-price reference next to it so the saving is a number, not a claim.</p>
+          </article>
+          <article class="mech">
+            <h3>Instructions paid once</h3>
+            <p>An agent's instructions are the cached prefix of all its tasks. Hosted caches expire in minutes and are priced per provider; here the cache is yours and the ledger shows the hit rate.</p>
+          </article>
+          <article class="mech">
+            <h3>Budgets per agent, not per account</h3>
+            <p>A runaway agent stops at the dollar amount you set for it. The others keep working.</p>
+          </article>
+          <article class="mech">
+            <h3>Nothing leaves your network</h3>
+            <p>The gateway, the engines, the ledger and the console all run where you put them. The console in your browser talks to your gateway, not to us.</p>
+          </article>
+          <article class="mech">
+            <h3>The API your code already speaks</h3>
+            <p>OpenAI-compatible chat completions with one extra header for the session. Existing SDKs, agent frameworks and the CLI tools you use keep working.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="band" id="next">
+      <div class="wrap">
+        <h2>Next: switch models without losing the session</h2>
+        <p class="intro">Teams change models for price, rate limits or quality. But a model's cache is computed from its own weights, and each model has its own tokenizer, chat template and tool-call format. So the new model starts cold and the plan can get lost on the way. The next layer is a session log that no single model owns.</p>
         <!--sketch:handoff-->
         <ol class="steps">
           <li><strong>Freeze.</strong> Stop at a clean turn boundary.</li>
@@ -126,9 +222,9 @@
     <section class="band" id="impact">
       <div class="wrap split split-wide">
         <div>
-          <h2>What it could save</h2>
+          <h2>What it could save at scale</h2>
           <p>For one 60-turn example task, our cost model puts the bill at $2.95 with no reuse, $0.47 with a prefix cache, and $0.30 when easy steps also go to a smaller model.</p>
-          <p class="source">Assumptions: $1 per 1M new input tokens, $0.10 per 1M cached, $3 per 1M output; 12K to 84K tokens per turn; 70% of steps can use a model at one fifth of the price. A pilot measures the real numbers.</p>
+          <p class="source">Assumptions: $1 per 1M new input tokens, $0.10 per 1M cached, $3 per 1M output; 12K to 84K tokens per turn; 70% of steps can use a model at one fifth of the price. A pilot measures the real numbers on your workload.</p>
         </div>
         <figure>
           <!--sketch:impact-->
@@ -144,8 +240,11 @@
           <div>
             <h3>Done</h3>
             <ul class="ticks">
+              <li><!--sketch:check--><span>A working Inferstack gateway and CLI: session affinity, routing, cost ledger, failover, evals, metrics</span></li>
+              <li><!--sketch:check--><span>Agents, tasks and background runs with per-agent budgets, in the gateway, the CLI and the Console</span></li>
+              <li><!--sketch:check--><span>The Console, <a href="/console/">live in the browser</a>, with Linux and Android builds from the same code</span></li>
+              <li><!--sketch:check--><span>Measured on a laptop: 87% less served cost on the second turn of a session</span></li>
               <li><!--sketch:check--><span>A market study of 8.56M public posts and issues on inference</span></li>
-              <li><!--sketch:check--><span>The architecture, and a 12-week plan with go / no-go gates</span></li>
               <li><!--sketch:check--><span>A baseline on real agent logs: 88.5% of prompt tokens repeat</span></li>
               <li><!--sketch:check--><span>A shipped product: <a href="https://beclutchai.com">Clutch</a>, a basketball recruiting platform</span></li>
             </ul>
@@ -153,7 +252,9 @@
           <div>
             <h3>Not yet</h3>
             <ul class="ticks">
-              <li><!--sketch:open--><span>A working prototype of the session layer. The build starts now.</span></li>
+              <li><!--sketch:open--><span>GPU engines. The prototype runs on CPU with llama.cpp; vLLM and SGLang are next.</span></li>
+              <li><!--sketch:open--><span>The model-switch handoff above</span></li>
+              <li><!--sketch:open--><span>Windows and macOS builds of the Console, and a signed Android release</span></li>
               <li><!--sketch:open--><span>Paying customers</span></li>
               <li><!--sketch:open--><span>An external benchmark. That's what a pilot is for.</span></li>
             </ul>
@@ -188,7 +289,7 @@
     <section class="cta" id="contact">
       <div class="wrap narrow">
         <h2>Running long agents on open models?</h2>
-        <p>We're looking for teams and GPU partners for a pilot. We run your real agent workloads, baseline against Lumenar, and judge it on one number: cost per solved task.</p>
+        <p>We're looking for teams and GPU partners for a pilot. We put Inferstack in front of your real agent workloads, baseline against it, and judge it on one number: cost per solved task.</p>
         <div class="actions">
           <a class="btn btn-light" href="mailto:mdilshaanbasha@gmail.com?subject=Lumenar%20pilot">Email us about a pilot</a>
           <a class="btn btn-quiet-light" href="https://www.linkedin.com/company/lumenar.in/posts">Follow on LinkedIn</a>
