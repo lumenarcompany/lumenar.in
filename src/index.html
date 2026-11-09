@@ -9,7 +9,10 @@
   <meta property="og:description" content="Inferstack: one OpenAI-compatible gateway that stops your agent paying for the same tokens twice.">
   <meta property="og:url" content="https://lumenar.in/">
   <meta property="og:type" content="website">
-  <meta name="theme-color" content="#ffffff">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0a0c12" media="(prefers-color-scheme: dark)">
+  <meta name="color-scheme" content="light dark">
+  <script>(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t)}}catch(e){}})()</script>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preload" href="fonts/LumenarSans-800.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/Kalam-400.woff2" as="font" type="font/woff2" crossorigin>
@@ -27,6 +30,10 @@
         <a href="#why">Why</a>
         <a href="#status">Where we are</a>
         <a class="btn btn-small" href="/console/">Open the Console</a>
+        <button class="theme" id="theme" type="button" aria-label="Switch between light and dark theme" aria-pressed="false" title="Light / dark">
+          <svg class="sun" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7.6a4.3 4.3 0 1 0 .4 8.6 4.3 4.3 0 0 0-.4-8.6z"/><path d="M12 2.5v2.2M12 19.4v2.1M4.4 4.6l1.6 1.5M18 18l1.6 1.5M2.5 12.2h2.2M19.3 11.9h2.2M4.5 19.6 6 18M18.1 6l1.5-1.6"/></svg>
+          <svg class="moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.8 14.6A8 8 0 0 1 9.5 4.2a8.2 8.2 0 1 0 10.3 10.4z"/></svg>
+        </button>
       </nav>
     </div>
   </header>
@@ -280,5 +287,6 @@
       <p><a href="https://www.linkedin.com/company/lumenar.in/posts">LinkedIn</a></p>
     </div>
   </footer>
+  <script>(function(){var b=document.getElementById('theme');if(!b)return;var r=document.documentElement;function cur(){return r.getAttribute('data-theme')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light')}function paint(){b.setAttribute('aria-pressed',String(cur()==='dark'))}b.addEventListener('click',function(){var n=cur()==='dark'?'light':'dark';r.setAttribute('data-theme',n);try{localStorage.setItem('theme',n)}catch(e){}paint()});paint()})()</script>
 </body>
 </html>
