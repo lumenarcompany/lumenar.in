@@ -5,7 +5,7 @@ const path = require("path");
 const rough = require("roughjs/bundled/rough.cjs.js");
 
 const gen = rough.generator();
-const PEN = "var(--pen)", INK = "var(--ink)", MARK = "var(--marker)", MUTE = "var(--graphite)";
+const PEN = "var(--pen)", INK = "var(--ink)", MARK = "var(--marker-fill)", MUTE = "var(--graphite)";
 let seed = 7;
 
 // one rough drawable -> <path> elements; pathLength=1 lets CSS draw any stroke in
@@ -44,7 +44,7 @@ function hero() {
   b += label(200, 220, "Inferstack", 24, 800) + label(200, 247, "session table  ·  router  ·  meter", 14, 400, MUTE);
   b += hand(200, 272, "one OpenAI-compatible API", 16, PEN, 'text-anchor="middle"');
   // the ledger: a little stack of pages
-  b += box(476, 186, 82, 100, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid" }, "d4") + box(470, 192, 82, 100, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid" }, "d4");
+  b += box(476, 186, 82, 100, { stroke: INK, fill: "var(--paper)", fillStyle: "solid" }, "d4") + box(470, 192, 82, 100, { stroke: INK, fill: "var(--paper)", fillStyle: "solid" }, "d4");
   for (let i = 0; i < 4; i++) b += line(482, 214 + i * 17, 540 - (i % 2) * 16, 214 + i * 17, { stroke: MUTE, strokeWidth: 1.4 }, "d4");
   b += arrow(372, 232, 466, 240, { stroke: INK }, "d4");
   b += hand(514, 174, "ledger", 19, PEN, 'text-anchor="middle"') + hand(514, 318, "cost of every request", 16, MUTE, 'text-anchor="middle"');
@@ -89,14 +89,14 @@ function consoleSketch() {
   b += box(36, 46, 70, 178, { stroke: MUTE, strokeWidth: 1.2 });
   ["agents", "tasks", "chat", "activity", "status"].forEach((t, i) => b += label(71, 66 + i * 24, t, 12, i === 1 ? 700 : 400, i === 1 ? INK : MUTE));
   b += box(122, 60, 190, 30, { stroke: MUTE, strokeWidth: 1.2 }) + label(132, 80, "Summarizer · summarize the error log", 12, 400, INK, "start");
-  b += box(122, 102, 212, 70, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.4 });
+  b += box(122, 102, 212, 70, { stroke: INK, fill: "var(--paper)", fillStyle: "solid", strokeWidth: 1.4 });
   for (let i = 0; i < 3; i++) b += line(132, 118 + i * 14, 300 - (i % 2) * 40, 118 + i * 14, { stroke: MUTE, strokeWidth: 1.2 });
   b += box(122, 184, 212, 26, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.2 });
   b += `<text x="130" y="201" font-family="ui-monospace, Menlo, monospace" font-size="10.5" fill="${INK}">cheap · cache 97.1% · $0.000008</text>`;
   // phone
   b += box(410, 20, 120, 240, { stroke: INK, strokeWidth: 2 }) + line(455, 36, 485, 36, { stroke: MUTE, strokeWidth: 1.6 });
   b += box(422, 56, 96, 24, { stroke: MUTE, strokeWidth: 1.2 });
-  b += box(422, 90, 96, 70, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.4 });
+  b += box(422, 90, 96, 70, { stroke: INK, fill: "var(--paper)", fillStyle: "solid", strokeWidth: 1.4 });
   for (let i = 0; i < 3; i++) b += line(430, 106 + i * 14, 505 - (i % 2) * 24, 106 + i * 14, { stroke: MUTE, strokeWidth: 1.2 });
   b += box(422, 170, 96, 24, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.2 });
   b += `<text x="428" y="186" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="${INK}">cache=97.1%</text>`;
@@ -134,7 +134,7 @@ function mini(kind) {
   } else if (kind === "append") {
     [["system", 70], ["tools", 60], ["repo map", 80], ["turns", 46]].forEach(([t, w], i) => {
       const x = 8 + [0, 74, 138, 222][i];
-      b += box(x, 26, w, 34, { stroke: INK, fill: i < 3 ? "#E9EDF7" : MARK, fillStyle: "solid", strokeWidth: 1.5 }) + label(x + w / 2, 48, t, 12, 600);
+      b += box(x, 26, w, 34, { stroke: INK, fill: i < 3 ? "var(--grid)" : MARK, fillStyle: "solid", strokeWidth: 1.5 }) + label(x + w / 2, 48, t, 12, 600);
     });
     b += arrow(270, 76, 300, 76, { strokeWidth: 1.6 });
     b += hand(140, 90, "stable first, new last", 15, PEN);
@@ -145,7 +145,7 @@ function mini(kind) {
     b += box(146, 62, 108, 28, { stroke: INK, strokeWidth: 1.5 }) + label(200, 81, "large model", 12, 600);
     b += hand(262, 22, "read, search", 14, MUTE, 'text-anchor="start"') + hand(262, 82, "plan, debug", 14, MUTE, 'text-anchor="start"');
   } else if (kind === "meter") {
-    b += box(8, 6, 150, 86, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.5 });
+    b += box(8, 6, 150, 86, { stroke: INK, fill: "var(--paper)", fillStyle: "solid", strokeWidth: 1.5 });
     b += label(20, 30, "served", 12, 600, INK, "start") + label(146, 30, "$0.000086", 12, 700, INK, "end");
     b += label(20, 54, "reference", 12, 600, MUTE, "start") + label(146, 54, "$0.000017", 12, 400, MUTE, "end");
     b += line(18, 66, 148, 66, { stroke: MUTE, strokeWidth: 1.2 });
@@ -168,13 +168,13 @@ function mini(kind) {
     b += hand(176, 48, "suite hash 4a28e07b…", 15, PEN, 'text-anchor="start"');
     b += hand(176, 72, "ships with the model", 13, MUTE, 'text-anchor="start"');
   } else if (kind === "agents") {
-    b += box(8, 8, 96, 84, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.5 }) + label(56, 28, "agent", 12, 700);
+    b += box(8, 8, 96, 84, { stroke: INK, fill: "var(--paper)", fillStyle: "solid", strokeWidth: 1.5 }) + label(56, 28, "agent", 12, 700);
     for (let i = 0; i < 3; i++) b += line(18, 42 + i * 12, 94 - (i % 2) * 20, 42 + i * 12, { stroke: MUTE, strokeWidth: 1.2 });
     b += label(56, 86, "instructions", 10, 400, MUTE);
     [["task 1", 1], ["task 2", 0], ["task 3", 0]].forEach(([t, hot], i) => {
       const y = 6 + i * 30;
       b += arrow(108, 50, 150, y + 14, { strokeWidth: 1.4 });
-      b += box(154, y, 78, 26, { stroke: INK, fill: hot ? MARK : "#FFFFFF", fillStyle: "solid", strokeWidth: 1.4 }) + label(193, y + 17, t, 12, 600);
+      b += box(154, y, 78, 26, { stroke: INK, fill: hot ? MARK : "var(--paper)", fillStyle: "solid", strokeWidth: 1.4 }) + label(193, y + 17, t, 12, 600);
     });
     b += hand(246, 52, "prefix cached once", 15, PEN, 'text-anchor="start"');
   } else if (kind === "budget") {
@@ -184,7 +184,7 @@ function mini(kind) {
     b += label(12, 22, "spent $1.34", 12, 600, INK, "start") + label(258, 84, "budget $2.00", 12, 600, INK, "middle");
     b += hand(272, 48, "runs stop here", 15, PEN, 'text-anchor="start"');
   } else if (kind === "api") {
-    b += box(8, 14, 250, 32, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.5 });
+    b += box(8, 14, 250, 32, { stroke: INK, fill: "var(--paper)", fillStyle: "solid", strokeWidth: 1.5 });
     b += `<text x="18" y="35" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="${INK}">POST /v1/chat/completions</text>`;
     b += box(8, 56, 272, 34, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.5 });
     b += `<text x="18" y="78" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="${INK}">"inferstack": { cache_hit_ratio … }</text>`;
@@ -192,7 +192,7 @@ function mini(kind) {
   } else {
     b += box(8, 26, 70, 40, { stroke: INK }) + label(43, 51, "A", 14, 700);
     b += box(226, 26, 70, 40, { stroke: INK }) + label(261, 51, "B", 14, 700);
-    b += box(128, 30, 50, 34, { stroke: PEN, fill: "#FFFFFF", fillStyle: "solid" });
+    b += box(128, 30, 50, 34, { stroke: PEN, fill: "var(--paper)", fillStyle: "solid" });
     b += line(136, 42, 170, 42, { stroke: MUTE, strokeWidth: 1.2 }) + line(136, 52, 162, 52, { stroke: MUTE, strokeWidth: 1.2 });
     b += arrow(82, 46, 122, 46, { strokeWidth: 1.6 }) + arrow(182, 46, 220, 46, { strokeWidth: 1.6 });
     b += hand(153, 90, "log goes along", 15, PEN, 'text-anchor="middle"');
@@ -206,7 +206,7 @@ function handoff() {
   let b = curve([[40, 70], [200, 52], [380, 86], [560, 56], [740, 82], [900, 64]], { strokeWidth: 1.6, stroke: MUTE, roughness: 1.4 });
   steps.forEach((t, i) => {
     const x = 60 + i * 168, y = [66, 58, 76, 70, 62, 72][i];
-    b += ell(x, y, 46, 46, { stroke: INK, fill: i === 5 ? MARK : "#FFFFFF", fillStyle: "solid", strokeWidth: 1.8 });
+    b += ell(x, y, 46, 46, { stroke: INK, fill: i === 5 ? MARK : "var(--paper)", fillStyle: "solid", strokeWidth: 1.8 });
     b += label(x, y + 6, String(i + 1), 17, 800);
     b += hand(x, y + 58, t, 21, INK, 'text-anchor="middle"');
   });
