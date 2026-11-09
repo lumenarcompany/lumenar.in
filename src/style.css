@@ -159,3 +159,9 @@ figcaption { font-family: var(--hand); color: var(--graphite); font-size: 1.05re
   .hero-sketch path { animation: none; stroke-dashoffset: 0; }
   .hero-sketch text { animation: none; opacity: 1; }
 }
+
+/* console steps and the why section */
+.steps-tight { grid-template-columns: 1fr; gap: 12px; margin-top: 28px; }
+.steps-tight li { font-size: 1rem; }
+.why .mech h3 { margin-top: 0; }
+.why .mech p { max-width: 30em; }

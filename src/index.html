@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lumenar | Inference for long-running AI agents</title>
-  <meta name="description" content="Lumenar builds Inferstack, a session-aware inference gateway for AI agents on open models. It keeps each session on its cache, routes each step to the cheapest model that fits, and meters what every request really cost.">
+  <meta name="description" content="Lumenar builds Inferstack, a session-aware inference gateway for AI agents on open models, and the Inferstack Console: create an agent, give it a task, run it, and see what it cost.">
   <meta property="og:title" content="Lumenar | Inference for long-running AI agents">
   <meta property="og:description" content="Inferstack: one OpenAI-compatible gateway that stops your agent paying for the same tokens twice.">
   <meta property="og:url" content="https://lumenar.in/">
@@ -24,10 +24,10 @@
       <nav aria-label="Main">
         <a href="#how">Inferstack</a>
         <a href="#console">Console</a>
-        <a href="#next">Next</a>
+        <a href="#why">Why</a>
         <a href="#status">Where we are</a>
         <a href="#team">Team</a>
-        <a class="btn btn-small" href="#contact">Talk to us</a>
+        <a class="btn btn-small" href="/console/">Open the Console</a>
       </nav>
     </div>
   </header>
@@ -39,7 +39,7 @@
           <h1>Your agent shouldn't pay for the same tokens twice.</h1>
           <p class="lede">Lumenar builds <strong>Inferstack</strong>, a session-aware inference gateway for AI agents on open models. It keeps each session on the engine that already holds its cache, sends each step to the cheapest model that fits, and records what every request really cost.</p>
           <div class="actions">
-            <a class="btn" href="#contact">Talk to us</a>
+            <a class="btn" href="/console/">Open the Console</a>
             <a class="btn btn-quiet" href="#how">See what it does</a>
           </div>
           <p class="note">One OpenAI-compatible API. Running today on llama.cpp; vLLM and SGLang engines are next.</p>
@@ -133,6 +133,16 @@
             <h3>Speaks the API you already use</h3>
             <p>Streaming and non-streaming chat completions, bearer-token auth, Prometheus metrics, and an <code>inferstack</code> block on every response with engine, cache hit, latency and cost.</p>
           </article>
+          <article class="mech">
+            <!--sketch:mini-agents-->
+            <h3>Runs agents and tasks for you</h3>
+            <p>Save an agent: instructions, policy, limits, an optional budget. Hand it tasks. The gateway runs them in the background, streams the output, and keeps the agent's instructions in the cache between tasks.</p>
+          </article>
+          <article class="mech">
+            <!--sketch:mini-budget-->
+            <h3>Caps what an agent may spend</h3>
+            <p>Each agent has its own ledger: tasks, runs, served cost, reference cost. Give it a budget in dollars and runs stop when the measured cost reaches it.</p>
+          </article>
         </div>
       </div>
     </section>
@@ -141,13 +151,55 @@
       <div class="wrap split">
         <div>
           <h2>Inferstack Console</h2>
-          <p>A client for the gateway on your desk and in your pocket. Chat with a session, watch which engine answered and what it cost, browse sessions and the ledger, and check engine health. One codebase for Linux, Windows, macOS, Android and the browser.</p>
-          <p class="note">In development. Not released yet.</p>
+          <p>The control panel for a gateway. Create an agent from a template, give it a task, press Run, and watch the result stream in with the engine, cache hit and cost it took. Chat with a session, browse sessions and the ledger, check engine health. One codebase for Linux, Windows, macOS, Android and the browser.</p>
+          <div class="actions">
+            <a class="btn" href="/console/">Open the Console</a>
+            <a class="btn btn-quiet" href="https://github.com/lumenarcompany/inferstack">Source and desktop builds</a>
+          </div>
+          <p class="note">Live in your browser. It talks to your own gateway; nothing about your prompts passes through us.</p>
+          <ol class="steps steps-tight">
+            <li><strong>Connect.</strong> Gateway URL and API key, stored on your device.</li>
+            <li><strong>Create an agent.</strong> Pick Summarizer, JSON extractor, Code reviewer, Translator, Support reply, Step planner, or start blank.</li>
+            <li><strong>Run a task.</strong> Paste the input, press Run. Re-run it, or run it under cost and quality side by side.</li>
+          </ol>
         </div>
         <figure>
           <!--sketch:console-->
-          <figcaption>Every reply ends with the same metadata line the CLI prints.</figcaption>
+          <figcaption>Every run ends with the same metadata line the CLI prints.</figcaption>
         </figure>
+      </div>
+    </section>
+
+    <section class="band" id="why">
+      <div class="wrap">
+        <h2>Why this instead of a frontier API</h2>
+        <p class="intro">Hosted frontier models are the right tool for many jobs. For long-running agents on your own data, a gateway you run changes what you can measure and what you can promise.</p>
+        <div class="grid-2 why">
+          <article class="mech">
+            <h3>Your hardware, your models</h3>
+            <p>Open models served by engines you run, on a laptop today and on your GPUs next. Swap a model by editing one config block; the eval checksum tells you if quality moved.</p>
+          </article>
+          <article class="mech">
+            <h3>Cost you can audit</h3>
+            <p>Served cost is measured engine time, not a price list. Every request, session, agent and task carries it, with the list-price reference next to it so the saving is a number, not a claim.</p>
+          </article>
+          <article class="mech">
+            <h3>Instructions paid once</h3>
+            <p>An agent's instructions are the cached prefix of all its tasks. Hosted caches expire in minutes and are priced per provider; here the cache is yours and the ledger shows the hit rate.</p>
+          </article>
+          <article class="mech">
+            <h3>Budgets per agent, not per account</h3>
+            <p>A runaway agent stops at the dollar amount you set for it. The others keep working.</p>
+          </article>
+          <article class="mech">
+            <h3>Nothing leaves your network</h3>
+            <p>The gateway, the engines, the ledger and the console all run where you put them. The console in your browser talks to your gateway, not to us.</p>
+          </article>
+          <article class="mech">
+            <h3>The API your code already speaks</h3>
+            <p>OpenAI-compatible chat completions with one extra header for the session. Existing SDKs, agent frameworks and the CLI tools you use keep working.</p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -189,6 +241,8 @@
             <h3>Done</h3>
             <ul class="ticks">
               <li><!--sketch:check--><span>A working Inferstack gateway and CLI: session affinity, routing, cost ledger, failover, evals, metrics</span></li>
+              <li><!--sketch:check--><span>Agents, tasks and background runs with per-agent budgets, in the gateway, the CLI and the Console</span></li>
+              <li><!--sketch:check--><span>The Console, <a href="/console/">live in the browser</a>, with Linux and Android builds from the same code</span></li>
               <li><!--sketch:check--><span>Measured on a laptop: 87% less served cost on the second turn of a session</span></li>
               <li><!--sketch:check--><span>A market study of 8.56M public posts and issues on inference</span></li>
               <li><!--sketch:check--><span>A baseline on real agent logs: 88.5% of prompt tokens repeat</span></li>
@@ -200,7 +254,7 @@
             <ul class="ticks">
               <li><!--sketch:open--><span>GPU engines. The prototype runs on CPU with llama.cpp; vLLM and SGLang are next.</span></li>
               <li><!--sketch:open--><span>The model-switch handoff above</span></li>
-              <li><!--sketch:open--><span>The Console app, in development for desktop, Android and web</span></li>
+              <li><!--sketch:open--><span>Windows and macOS builds of the Console, and a signed Android release</span></li>
               <li><!--sketch:open--><span>Paying customers</span></li>
               <li><!--sketch:open--><span>An external benchmark. That's what a pilot is for.</span></li>
             </ul>

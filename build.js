@@ -87,8 +87,8 @@ function consoleSketch() {
   // laptop
   b += box(20, 30, 330, 210, { stroke: INK, strokeWidth: 2 }) + line(0, 250, 370, 250, { stroke: INK, strokeWidth: 2.2 }) + line(140, 240, 230, 240, { stroke: MUTE, strokeWidth: 1.2 });
   b += box(36, 46, 70, 178, { stroke: MUTE, strokeWidth: 1.2 });
-  ["chat", "sessions", "ledger", "status"].forEach((t, i) => b += label(71, 72 + i * 26, t, 12, i === 0 ? 700 : 400, i === 0 ? INK : MUTE));
-  b += box(122, 60, 190, 30, { stroke: MUTE, strokeWidth: 1.2 }) + label(132, 80, "summarize the error log", 12, 400, INK, "start");
+  ["agents", "tasks", "chat", "activity", "status"].forEach((t, i) => b += label(71, 66 + i * 24, t, 12, i === 1 ? 700 : 400, i === 1 ? INK : MUTE));
+  b += box(122, 60, 190, 30, { stroke: MUTE, strokeWidth: 1.2 }) + label(132, 80, "Summarizer · summarize the error log", 12, 400, INK, "start");
   b += box(122, 102, 212, 70, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.4 });
   for (let i = 0; i < 3; i++) b += line(132, 118 + i * 14, 300 - (i % 2) * 40, 118 + i * 14, { stroke: MUTE, strokeWidth: 1.2 });
   b += box(122, 184, 212, 26, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1.2 });
@@ -102,8 +102,8 @@ function consoleSketch() {
   b += `<text x="428" y="186" font-family="ui-monospace, Menlo, monospace" font-size="9" fill="${INK}">cache=97.1%</text>`;
   b += line(422, 236, 518, 236, { stroke: MUTE, strokeWidth: 1.2 });
   b += hand(470, 292, "one codebase", 18, PEN, 'text-anchor="middle"');
-  b += hand(185, 292, "desktop, Android, browser", 18, PEN, 'text-anchor="middle"');
-  return svg(560, 310, b, "Sketch of the Inferstack Console on a laptop and a phone: the same chat, and a highlighted metadata line under the reply showing engine, cache hit and served cost.");
+  b += hand(185, 292, "browser, desktop, Android", 18, PEN, 'text-anchor="middle"');
+  return svg(560, 310, b, "Sketch of the Inferstack Console on a laptop and a phone: an agent's task with its streamed result, and a highlighted metadata line under it showing engine, cache hit and served cost.");
 }
 
 // ---------- re-send tax: tokens sent each turn ----------
@@ -167,6 +167,22 @@ function mini(kind) {
     b += label(14, 86, "10 / 12", 14, 700, INK, "start");
     b += hand(176, 48, "suite hash 4a28e07b…", 15, PEN, 'text-anchor="start"');
     b += hand(176, 72, "ships with the model", 13, MUTE, 'text-anchor="start"');
+  } else if (kind === "agents") {
+    b += box(8, 8, 96, 84, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.5 }) + label(56, 28, "agent", 12, 700);
+    for (let i = 0; i < 3; i++) b += line(18, 42 + i * 12, 94 - (i % 2) * 20, 42 + i * 12, { stroke: MUTE, strokeWidth: 1.2 });
+    b += label(56, 86, "instructions", 10, 400, MUTE);
+    [["task 1", 1], ["task 2", 0], ["task 3", 0]].forEach(([t, hot], i) => {
+      const y = 6 + i * 30;
+      b += arrow(108, 50, 150, y + 14, { strokeWidth: 1.4 });
+      b += box(154, y, 78, 26, { stroke: INK, fill: hot ? MARK : "#FFFFFF", fillStyle: "solid", strokeWidth: 1.4 }) + label(193, y + 17, t, 12, 600);
+    });
+    b += hand(246, 52, "prefix cached once", 15, PEN, 'text-anchor="start"');
+  } else if (kind === "budget") {
+    b += box(8, 30, 250, 30, { stroke: INK, strokeWidth: 1.5 });
+    b += box(10, 32, 168, 26, { stroke: INK, fill: MARK, fillStyle: "solid", strokeWidth: 1 });
+    b += line(258, 20, 258, 70, { stroke: INK, strokeWidth: 2 });
+    b += label(12, 22, "spent $1.34", 12, 600, INK, "start") + label(258, 84, "budget $2.00", 12, 600, INK, "middle");
+    b += hand(272, 48, "runs stop here", 15, PEN, 'text-anchor="start"');
   } else if (kind === "api") {
     b += box(8, 14, 250, 32, { stroke: INK, fill: "#FFFFFF", fillStyle: "solid", strokeWidth: 1.5 });
     b += `<text x="18" y="35" font-family="ui-monospace, Menlo, monospace" font-size="12" fill="${INK}">POST /v1/chat/completions</text>`;
@@ -222,6 +238,7 @@ const slots = {
   hero: hero(), resend: resend(), bench: bench(), console: consoleSketch(), handoff: handoff(), impact: impact(),
   "mini-sticky": mini("sticky"), "mini-append": mini("append"), "mini-route": mini("route"), "mini-handoff": mini("handoff"),
   "mini-meter": mini("meter"), "mini-failover": mini("failover"), "mini-evals": mini("evals"), "mini-api": mini("api"),
+  "mini-agents": mini("agents"), "mini-budget": mini("budget"),
 };
 html = html.replace(/<!--sketch:([a-z-]+)-->/g, (m, k) => {
   if (slots[k]) return slots[k];
