@@ -122,10 +122,6 @@ figcaption { font-family: var(--hand); color: var(--graphite); font-size: 1.05re
 .ticks li { display: flex; gap: 14px; align-items: flex-start; padding: 14px 0; border-top: 1px solid var(--rule); font-size: 1.05rem; }
 .ticks .mark { flex: 0 0 26px; width: 26px; height: 26px; margin-top: 1px; }
 
-.people { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; margin-top: 16px; }
-.person h3 { font-size: 1.5rem; margin-bottom: 4px; }
-.person p { color: var(--graphite); margin-bottom: 12px; }
-.person a { font-size: 0.98rem; word-break: break-all; }
 
 .cta { background: var(--ink); color: #fff; padding: 104px 0; }
 .cta h2 { color: #fff; }
@@ -141,7 +137,6 @@ figcaption { font-family: var(--hand); color: var(--graphite); font-size: 1.05re
   .hero { padding: 48px 0 64px; }
   .hero-grid, .split, .split-wide, .grid-2 { grid-template-columns: 1fr; gap: 40px; }
   .steps { grid-template-columns: 1fr 1fr; }
-  .people { grid-template-columns: 1fr; gap: 28px; }
   .band { padding-top: 80px; }
   .hero-figure { transform: none; }
 }
